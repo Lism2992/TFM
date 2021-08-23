@@ -1,0 +1,88 @@
+Conexión a Hive-Server a través de Beeline.
+
+!connect jdbc:hive2://hiveserver:10000 hive hive
+
+### Q1:
+CREATE DATABASE IF NOT EXISTS TFM;
+
+### Q2:
+USE TFM;
+
+### Q3:
+CREATE TABLE padron_int(
+COD_DISTRITO INT, 
+DESC_DISTRITO STRING,
+COD_DIST_BARRIO INT,
+DESC_BARRIO STRING,
+COD_BARRIO INT,
+COD_DIST_SECCION INT,
+COD_SECCION INT,
+COD_EDAD_INT INT,
+EspanolesHombres INT,
+EspanolesMujeres INT,
+ExtranjerosHombres INT,
+ExtranjerosMujeres INT)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+   "separatorChar" = ";",
+   "quoteChar"     = "\""
+) 
+tblproperties("skip.header.line.count"="1");
+
+### Q4:
+LOAD DATA INPATH '/test/padron/padron' INTO TABLE padron_int;
+
+### Q5:
+CREATE TABLE padron_bueno AS 
+SELECT cast(cod_distrito as int) cod_distrito,
+       rtrim(desc_distrito) desc_distrito,
+       cast(cod_dist_barrio as int) cod_dist_barrio,
+       rtrim(desc_barrio) desc_barrio,
+       cast(cod_barrio as int) cod_barrio,
+       cast(cod_dist_seccion as int) cod_dist_seccion,
+       cast(cod_seccion as int) cod_seccion,
+       cast(cod_edad_int as int) cod_edad_int,
+       cast(CASE WHEN (length(espanoleshombres) = 0) THEN 0 ELSE espanoleshombres END as int) espanoleshombres,
+       cast(CASE WHEN (length(espanolesmujeres) = 0) THEN 0 ELSE espanolesmujeres END as int) espanolesmujeres,
+       cast(CASE WHEN (length(extranjeroshombres) = 0) THEN 0 ELSE extranjeroshombres END as int) extranjeroshombres,
+       cast(CASE WHEN (length(extranjerosmujeres) = 0) THEN 0 ELSE extranjerosmujeres END as int) extranjerosmujeres
+FROM padron_int;
+
+#### Q6:
+DESCRIBE padron_bueno;
+
+#### Q7:
+SELECT distinct(desc_distrito), length(desc_distrito) AS longitud FROM padron_bueno;
+
+### La creamos en parquet Q5
+
+CREATE TABLE padron_bueno_parquet STORED AS Parquet AS 
+SELECT *     
+FROM padron_bueno;
+
+### Q8:
+CREATE external TABLE padron_ext (
+COD_DISTRITO INT,
+DESC_DISTRITO STRING,
+COD_DIST_BARRIO INT,
+DESC_BARRIO STRING,
+COD_BARRIO INT,
+COD_DIST_SECCION INT,
+COD_SECCION INT,
+COD_EDAD_INT INT,
+EspanolesHombres INT,
+EspanolesMujeres INT,
+ExtranjerosHombres INT,
+ExtranjerosMujeres INT)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
+WITH SERDEPROPERTIES ('input.regex'='"(\\d*)";"(.*?)\\s*";"(\\d*)";"(.*?)\\s*";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)"')
+location '/test/padron'
+tblproperties("skip.header.line.count" = "1",'serialization.encoding'='utf-8');
+
+### Q9:
+
+CREATE TABLE padron_parquet STORED AS Parquet AS SELECT * FROM padron_int;
+
+### Q10:
+
+SELECT * FROM "TBLS";
