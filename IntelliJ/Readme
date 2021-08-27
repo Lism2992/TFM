@@ -1,1 +1,7 @@
-Carpeta con el proyecto IntelliJ, incluye source y compilados.
+En este directorio se incluyen:
+
+ - POM del proyecto en IntelliJ en formato de texto plano.
+
+ - Código en formato de texto plano de cada una de las tres clases definidas en el proyecto.
+ 
+ - Carpeta con el proyecto IntelliJ, incluye source y compilados.
