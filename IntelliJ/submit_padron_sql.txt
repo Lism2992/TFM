@@ -1,0 +1,71 @@
+import org.apache.spark.sql.SparkSession
+
+object submit_padron_sql
+{
+
+
+  def main(args: Array[String]):Unit =
+  {
+
+    println("Iniciando SparkSession ...")
+
+    val spark = SparkSession
+      .builder()
+      .enableHiveSupport()
+      .appName("submit_padron_scala")
+      .getOrCreate()
+
+    println("Nos cambiamos a la base de datos utilizada en el proyecto")
+
+    spark.sql("""create database if not exists %s""".format(args(0)))
+
+    spark.sql("""USE %s""".format(args(0)))
+
+    println("Creando tabla de Hive con los datos en la dirección:" +args(1))
+
+    spark.sql("""CREATE external TABLE padron_ext_spark (
+                |COD_DISTRITO INT,
+                |DESC_DISTRITO STRING,
+                |COD_DIST_BARRIO INT,
+                |DESC_BARRIO STRING,
+                |COD_BARRIO INT,
+                |COD_DIST_SECCION INT,
+                |COD_SECCION INT,
+                |COD_EDAD_INT INT,
+                |EspanolesHombres INT,
+                |EspanolesMujeres INT,
+                |ExtranjerosHombres INT,
+                |ExtranjerosMujeres INT)
+                |ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
+                |WITH SERDEPROPERTIES ('input.regex'='"(\\d*)";"(.*?)\\s*";"(\\d*)";"(.*?)\\s*";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)"')
+                |location '%s';""".stripMargin.format(args(1)))
+
+    println("Como no funcionan las 'tableproperties' en la tabla y los headers no encajan con el formato de" +
+      " la RegEx, tenemos que eliminar manualmente la primera fila de la tabla.")
+
+    spark.sql("""CREATE TABLE padron_ext_spark_bueno as (SELECT * FROM padron_ext_spark WHERE COD_DISTRITO IS NOT NULL)""")
+
+    println("Mostramos los tipos de los datos de la tabla para ver que todo se ha importado correctamente.")
+
+    spark.sql("""DESCRIBE padron_ext_spark_bueno""").show()
+
+    println("Si no finalizamos las queries de Hive con 'show()' no muestran ningún resultado por pantalla.")
+
+    println("Mostremos una previsualización de los datos por pantalla:")
+
+    spark.sql("""select DESC_DISTRITO,COD_DISTRITO,length(DESC_DISTRITO) from padron_ext_spark_bueno limit 5""").show()
+
+
+
+
+    spark.sql("""DROP TABLE IF EXISTS padron_ext_spark_bueno""")
+
+    spark.sql("""DROP TABLE IF EXISTS padron_ext_spark""")
+
+
+
+
+
+  }
+
+}

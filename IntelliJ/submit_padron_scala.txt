@@ -1,0 +1,102 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.SparkSession
+
+object submit_padron_scala
+{
+
+
+  def main(args: Array[String]):Unit =
+  {
+
+    println("Iniciando SparkSession ...")
+
+    val spark = SparkSession
+      .builder()
+      .appName("submit_padron_scala")
+      .getOrCreate()
+
+    println("Importando datos de:" +args(0))
+
+    val padronDF = spark.read.format("csv")
+                     .option("inferSchema",value = true)
+                     .option("header",value = true)
+                     .option("emptyValue", "0")
+                     .option("quote", "\"")
+                     .option("escape", "\"")
+                     .option("sep", ";")
+                     .option("encoding", "ISO-8859-1")
+                     .load(args(0))
+
+    println("Tipos de los datos:")
+
+    padronDF.dtypes
+
+
+
+    println("Los diferentes barrios que hay en el dataset son:")
+
+    padronDF.select(col("DESC_BARRIO"))
+            .distinct()
+            .show(40)
+
+    println("Y en total son:" +padronDF.select(col("DESC_BARRIO")).distinct().count())
+
+
+
+    println("Los diferentes distritos que hay en el dataset son:")
+
+    padronDF.select(col("DESC_DISTRITO"))
+            .distinct()
+            .show(40)
+
+    println("Y en total son:" +padronDF.select(col("DESC_DISTRITO")).distinct().count())
+    
+
+
+    println("Se puede observar que los campos tienen espacios sobrantes:")
+
+    padronDF.select(col("DESC_DISTRITO"),length(col("DESC_DISTRITO")))
+            .distinct()
+            .show()
+
+
+    val padronDF_bueno = padronDF.withColumn("DESC_DISTRITO",rtrim(col("DESC_DISTRITO")))
+                                 .withColumn("DESC_BARRIO",rtrim(col("DESC_BARRIO")))
+
+    println("Los hemos quitado con la función 'trim'.")
+
+    padronDF_bueno.select(col("DESC_DISTRITO"),length(col("DESC_DISTRITO"))).distinct().show()
+
+    println("Ahora elaboramos la query que suma las mujeres españolas de cada distrito que sea igual a CENTRO, BARAJAS o RETIRO y pivotamos por edades.")
+
+    val cont = padronDF_bueno.select(col("COD_EDAD_INT"),col("DESC_DISTRITO"),col("espanolesmujeres"))
+                             .where(col("DESC_DISTRITO").isin("CENTRO", "BARAJAS", "RETIRO"))
+                             .groupBy(col("COD_EDAD_INT"))
+                             .pivot("DESC_DISTRITO")
+                             .sum("espanolesmujeres")
+                             .orderBy("COD_EDAD_INT")
+
+    println("Una vez tenemos este DataFrame lo mostramos y lo cacheamos:")
+
+    cont.cache().show()
+
+    println("Calculamos los porcentajes y mostramos el resultado:")
+
+    cont.select("*").withColumn("Suma", col("BARAJAS") + col("CENTRO")+col("RETIRO"))
+                         .withColumn("BARAJAS%", round(col("barajas")/col("Suma")*100,2))
+                         .withColumn("CENTRO%", round(col("centro")/col("Suma")*100,2))
+                         .withColumn("RETIRO%", round(col("retiro")/col("Suma")*100,2))
+                         .show()
+
+    println("Guardamos este último DataFrame y lo escribimos en la ruta:" +args(2))
+
+    val escritura_DF = cont.select("*").withColumn("Suma", col("BARAJAS") + col("CENTRO")+col("RETIRO"))
+                           .withColumn("BARAJAS%", round(col("barajas")/col("Suma")*100,2))
+                           .withColumn("CENTRO%", round(col("centro")/col("Suma")*100,2))
+                           .withColumn("RETIRO%", round(col("retiro")/col("Suma")*100,2))
+
+    escritura_DF.write.parquet(args(1))
+
+  }
+
+}
