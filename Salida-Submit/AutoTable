@@ -1,0 +1,107 @@
+Para poder introducir los argumentos nombrados vamos a mapear el array de entrada indicando que nos cree un map separando clave y valor por el singno '='. Tras esto, podemos recuperar los values de cada elemento llamando a la clave correspondiente.
+
+Iniciando SparkSession ...
+
+En caso de que los argumentos no sean los necesarios lanzamos una excepción para finalizar el programa dando detalles de por qué ha ocurrido el fallo.El resultado de esta excepción también se puede encontrar en el stdout de la aplicación.
+
+Creando tabla de Hive con los argumentos: 
+
+database = tfm
+
+table = auto_padron
+
+schema = COD_DISTRITO INT,DESC_DISTRITO STRING,COD_DIST_BARRIO INT,DESC_BARRIO STRING,COD_BARRIO INT,COD_DIST_SECCION INT,COD_SECCION INT,COD_EDAD_INT INT,EspanolesHombres INT,EspanolesMujeres INT,ExtranjerosHombres INT,ExtranjerosMujeres INT
+
+regex = "(\d*)";"(.*?)\s*";"(\d*)";"(.*?)\s*";"(\d*)";"(\d*)";"(\d*)";"(\d*)";"(\d*)";"(\d*)";"(\d*)";"(\d*)"
+
+location = hdfs://mycluster:8020/TFM/
+
+header = true
+
+La query lanzada para crear la tabla ha sido:
+
+CREATE external TABLE auto_padron (COD_DISTRITO INT,DESC_DISTRITO STRING,COD_DIST_BARRIO INT,DESC_BARRIO STRING,COD_BARRIO INT,COD_DIST_SECCION INT,COD_SECCION INT,COD_EDAD_INT INT,EspanolesHombres INT,EspanolesMujeres INT,ExtranjerosHombres INT,ExtranjerosMujeres INT)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
+WITH SERDEPROPERTIES ('input.regex'='"(\\d*)";"(.*?)\\s*";"(\\d*)";"(.*?)\\s*";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)";"(\\d*)"')
+location 'hdfs://mycluster:8020/TFM/';
+
+Como no funcionan las 'tableproperties' en la tabla y los headers no encajan con el formato de la RegEx, tenemos que eliminar manualmente la primera fila de la tabla. Haremos esto sólo en caso de que el argumento header tenga el valor 'true'
+
+Debemos tener cuidado con esto ya que normalmente los datos en Spark tienden a ser particionados y no podemos eliminar el primer elemento de cualquier partición. Por ello utilizamos la función 'monotonically_increasing_id()' para crear una columna con los índices numéricos. Mientras tengamos menos de varios miles de particiones este método debería funcionar como se espera.
+
+Se ha seleccionado la opción de eliminar el header.
+
+Podemos mostrar cómo queda el DataFrame cuando le asignamos la columna con la id incremental.
+
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+------+
+|COD_DISTRITO|DESC_DISTRITO|COD_DIST_BARRIO|DESC_BARRIO|COD_BARRIO|COD_DIST_SECCION|COD_SECCION|COD_EDAD_INT|EspanolesHombres|EspanolesMujeres|ExtranjerosHombres|ExtranjerosMujeres|number|
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+------+
+|        null|         null|           null|       null|      null|            null|       null|        null|            null|            null|              null|              null|     0|
+|           1|       CENTRO|            101|    PALACIO|         1|            1006|          6|         103|            null|               1|              null|              null|     1|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           0|               1|               1|              null|                 3|     2|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           1|               2|               3|              null|              null|     3|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           2|               1|               4|              null|              null|     4|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           3|               4|            null|              null|              null|     5|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           4|               1|               2|              null|                 1|     6|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           5|               2|               6|              null|              null|     7|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           6|               1|            null|              null|              null|     8|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           7|               3|               2|              null|              null|     9|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           8|               4|               2|              null|              null|    10|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           9|               1|               3|              null|              null|    11|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          10|               5|               3|                 1|              null|    12|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          11|               1|               2|              null|              null|    13|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          12|               3|               2|                 1|              null|    14|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          13|               2|               1|              null|              null|    15|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          14|               3|               2|              null|              null|    16|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          15|               1|               1|                 1|              null|    17|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          16|            null|               1|              null|              null|    18|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          17|               3|               2|              null|              null|    19|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          18|               3|            null|              null|                 1|    20|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          19|               1|               2|                 1|              null|    21|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          20|            null|               2|              null|                 1|    22|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          21|               2|               2|                 1|                 2|    23|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          22|            null|            null|              null|                 3|    24|
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+------+
+only showing top 25 rows
+
+Podemos mostrar el número de particiones del DataFrame bajando al nivel de RDD.2
+
+Es interesante ya que sabemos que el método utilizado para asignar ids funciona mal con más de 1 billón de particiones.
+Mostramos las primeras 25 líneas para ver el resultado de la tabulación:
+
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+
+|COD_DISTRITO|DESC_DISTRITO|COD_DIST_BARRIO|DESC_BARRIO|COD_BARRIO|COD_DIST_SECCION|COD_SECCION|COD_EDAD_INT|EspanolesHombres|EspanolesMujeres|ExtranjerosHombres|ExtranjerosMujeres|
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+
+|           1|       CENTRO|            101|    PALACIO|         1|            1006|          6|         103|            null|               1|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           0|               1|               1|              null|                 3|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           1|               2|               3|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           2|               1|               4|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           3|               4|            null|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           4|               1|               2|              null|                 1|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           5|               2|               6|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           6|               1|            null|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           7|               3|               2|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           8|               4|               2|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|           9|               1|               3|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          10|               5|               3|                 1|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          11|               1|               2|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          12|               3|               2|                 1|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          13|               2|               1|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          14|               3|               2|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          15|               1|               1|                 1|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          16|            null|               1|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          17|               3|               2|              null|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          18|               3|            null|              null|                 1|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          19|               1|               2|                 1|              null|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          20|            null|               2|              null|                 1|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          21|               2|               2|                 1|                 2|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          22|            null|            null|              null|                 3|
+|           1|       CENTRO|            101|    PALACIO|         1|            1007|          7|          23|               3|               4|                 2|                 1|
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+
+only showing top 25 rows
+
+El número de filas del dataset es: 237675
+
+Tipos de los datos:
+
+Array((COD_DISTRITO,IntegerType), (DESC_DISTRITO,StringType), (COD_DIST_BARRIO,IntegerType), (DESC_BARRIO,StringType), (COD_BARRIO,IntegerType), (COD_DIST_SECCION,IntegerType), (COD_SECCION,IntegerType), (COD_EDAD_INT,IntegerType), (EspanolesHombres,IntegerType), (EspanolesMujeres,IntegerType), (ExtranjerosHombres,IntegerType), (ExtranjerosMujeres,IntegerType))
