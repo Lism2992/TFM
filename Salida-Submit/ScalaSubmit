@@ -1,0 +1,189 @@
+Iniciando SparkSession ...
+Importando datos de: hdfs://mycluster:8020/TFM/padron
+Tipos de los datos:Array((COD_DISTRITO,IntegerType), (DESC_DISTRITO,StringType), (COD_DIST_BARRIO,IntegerType), (DESC_BARRIO,StringType), (COD_BARRIO,IntegerType), (COD_DIST_SECCION,IntegerType), (COD_SECCION,IntegerType), (COD_EDAD_INT,IntegerType), (EspanolesHombres,IntegerType), (EspanolesMujeres,IntegerType), (ExtranjerosHombres,IntegerType), (ExtranjerosMujeres,IntegerType))
+Los diferentes barrios que hay en el dataset son:
++--------------------+
+|         DESC_BARRIO|
++--------------------+
+|EMBAJADORES         |
+|SANTA EUGENIA       |
+|LEGAZPI             |
+|DELICIAS            |
+|CIUDAD UNIVERSITARIA|
+|CONCEPCION          |
+|VENTAS              |
+|IMPERIAL            |
+|SAN FERMIN          |
+|PEÑA GRANDE         |
+|ESTRELLA            |
+|TRAFALGAR           |
+|ALUCHE              |
+|PUERTA BONITA       |
+|ADELFAS             |
+|PUEBLO NUEVO        |
+|PALOMAS             |
+|CORRALEJOS          |
+|LOS CARMENES        |
+|VALDEZARZA          |
+|PUERTA DEL ANGEL    |
+|ORCASITAS           |
+|ZOFIO               |
+|SAN ISIDRO          |
+|ARCOS               |
+|LOS JERONIMOS       |
+|NIÑO JESUS          |
+|NUEVA ESPAÑA        |
+|QUINTANA            |
+|AEROPUERTO          |
+|FUENTELARREINA      |
+|VALLEHERMOSO        |
+|CANILLAS            |
+|ALMENDRALES         |
+|SAN CRISTOBAL       |
+|PALACIO             |
+|CORTES              |
+|CASTELLANA          |
+|EL SALVADOR         |
+|CHOPERA             |
++--------------------+
+only showing top 40 rows
+
+Y en total son: 132
+Los diferentes distritos que hay en el dataset son:
++--------------------+
+|       DESC_DISTRITO|
++--------------------+
+|VILLA DE VALLECAS   |
+|SALAMANCA           |
+|CHAMBERI            |
+|CHAMARTIN           |
+|TETUAN              |
+|VILLAVERDE          |
+|MORATALAZ           |
+|CENTRO              |
+|USERA               |
+|VICALVARO           |
+|HORTALEZA           |
+|CIUDAD LINEAL       |
+|FUENCARRAL-EL PARDO |
+|SAN BLAS-CANILLEJAS |
+|MONCLOA-ARAVACA     |
+|RETIRO              |
+|LATINA              |
+|BARAJAS             |
+|ARGANZUELA          |
+|CARABANCHEL         |
+|PUENTE DE VALLECAS  |
++--------------------+
+
+Y en total son: 21
+Se puede observar que los campos tienen espacios sobrantes:
++--------------------+---------------------+
+|       DESC_DISTRITO|length(DESC_DISTRITO)|
++--------------------+---------------------+
+|MONCLOA-ARAVACA     |                   20|
+|CARABANCHEL         |                   20|
+|ARGANZUELA          |                   20|
+|CHAMARTIN           |                   20|
+|BARAJAS             |                   20|
+|TETUAN              |                   20|
+|VILLAVERDE          |                   20|
+|CHAMBERI            |                   20|
+|LATINA              |                   20|
+|USERA               |                   20|
+|CENTRO              |                   20|
+|HORTALEZA           |                   20|
+|VICALVARO           |                   20|
+|MORATALAZ           |                   20|
+|CIUDAD LINEAL       |                   20|
+|SALAMANCA           |                   20|
+|FUENCARRAL-EL PARDO |                   20|
+|VILLA DE VALLECAS   |                   20|
+|RETIRO              |                   20|
+|PUENTE DE VALLECAS  |                   20|
++--------------------+---------------------+
+only showing top 20 rows
+
+Los hemos quitado con la función 'trim'.
++-------------------+---------------------+
+|      DESC_DISTRITO|length(DESC_DISTRITO)|
++-------------------+---------------------+
+|         ARGANZUELA|                   10|
+|FUENCARRAL-EL PARDO|                   19|
+|              USERA|                    5|
+|          SALAMANCA|                    9|
+| PUENTE DE VALLECAS|                   18|
+|  VILLA DE VALLECAS|                   17|
+|           CHAMBERI|                    8|
+|          VICALVARO|                    9|
+|             RETIRO|                    6|
+|SAN BLAS-CANILLEJAS|                   19|
+|             CENTRO|                    6|
+|          CHAMARTIN|                    9|
+|             LATINA|                    6|
+|          MORATALAZ|                    9|
+|            BARAJAS|                    7|
+|             TETUAN|                    6|
+|      CIUDAD LINEAL|                   13|
+|          HORTALEZA|                    9|
+|         VILLAVERDE|                   10|
+|        CARABANCHEL|                   11|
++-------------------+---------------------+
+only showing top 20 rows
+
+Ahora elaboramos la query que suma las mujeres españolas de cada distrito que sea igual a CENTRO, BARAJAS o RETIRO y pivotamos por edades.
+Una vez tenemos este DataFrame lo mostramos y lo cacheamos:
++------------+-------+------+------+
+|COD_EDAD_INT|BARAJAS|CENTRO|RETIRO|
++------------+-------+------+------+
+|           0|    170|   259|   318|
+|           1|    179|   260|   370|
+|           2|    209|   255|   396|
+|           3|    235|   244|   426|
+|           4|    250|   244|   436|
+|           5|    255|   250|   431|
+|           6|    243|   251|   448|
+|           7|    270|   232|   431|
+|           8|    252|   263|   438|
+|           9|    266|   265|   422|
+|          10|    264|   260|   416|
+|          11|    263|   260|   437|
+|          12|    285|   259|   427|
+|          13|    252|   250|   398|
+|          14|    282|   269|   431|
+|          15|    263|   247|   423|
+|          16|    244|   258|   412|
+|          17|    257|   279|   443|
+|          18|    213|   256|   413|
+|          19|    207|   265|   430|
++------------+-------+------+------+
+only showing top 20 rows
+
+Calculamos los porcentajes y mostramos el resultado:
++------------+-------+------+------+----+--------+-------+-------+
+|COD_EDAD_INT|BARAJAS|CENTRO|RETIRO|Suma|BARAJAS%|CENTRO%|RETIRO%|
++------------+-------+------+------+----+--------+-------+-------+
+|           0|    170|   259|   318| 747|   22.76|  34.67|  42.57|
+|           1|    179|   260|   370| 809|   22.13|  32.14|  45.74|
+|           2|    209|   255|   396| 860|    24.3|  29.65|  46.05|
+|           3|    235|   244|   426| 905|   25.97|  26.96|  47.07|
+|           4|    250|   244|   436| 930|   26.88|  26.24|  46.88|
+|           5|    255|   250|   431| 936|   27.24|  26.71|  46.05|
+|           6|    243|   251|   448| 942|    25.8|  26.65|  47.56|
+|           7|    270|   232|   431| 933|   28.94|  24.87|   46.2|
+|           8|    252|   263|   438| 953|   26.44|   27.6|  45.96|
+|           9|    266|   265|   422| 953|   27.91|  27.81|  44.28|
+|          10|    264|   260|   416| 940|   28.09|  27.66|  44.26|
+|          11|    263|   260|   437| 960|    27.4|  27.08|  45.52|
+|          12|    285|   259|   427| 971|   29.35|  26.67|  43.98|
+|          13|    252|   250|   398| 900|    28.0|  27.78|  44.22|
+|          14|    282|   269|   431| 982|   28.72|  27.39|  43.89|
+|          15|    263|   247|   423| 933|   28.19|  26.47|  45.34|
+|          16|    244|   258|   412| 914|    26.7|  28.23|  45.08|
+|          17|    257|   279|   443| 979|   26.25|   28.5|  45.25|
+|          18|    213|   256|   413| 882|   24.15|  29.02|  46.83|
+|          19|    207|   265|   430| 902|   22.95|  29.38|  47.67|
++------------+-------+------+------+----+--------+-------+-------+
+only showing top 20 rows
+
+Guardamos este último DataFrame y lo escribimos en la ruta: hdfs://mycluster:8020/test_output/padron_out
