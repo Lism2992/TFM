@@ -11,13 +11,12 @@ object AutoTable
       println("Para poder introducir los argumentos nombrados vamos a mapear el" +
         " array de entrada indicando que nos cree un map separando clave y valor por el " +
         "singno '='. Tras esto, podemos recuperar los values de cada elemento llamando a " +
-        "la clave correspondiente.")
+        "la clave correspondiente.\n")
 
       val namedArgs = args.map(x => x.split("=")).map(y => (y(0), y(1))).toMap
 
-      println()
-      println("Iniciando SparkSession ...")
-      println()
+      println("Iniciando SparkSession ...\n")
+
 
       val spark = SparkSession
         .builder()
@@ -28,28 +27,21 @@ object AutoTable
       println("En caso de que los argumentos no sean los necesarios lanzamos una excepción " +
         "para finalizar el programa dando detalles de por qué ha ocurrido el fallo." +
         "El resultado de esta excepción también se puede encontrar en el stdout de la " +
-        "aplicación.")
+        "aplicación.\n")
 
       if (namedArgs.keys.toSet != Set("database", "table", "location", "regex", "schema", "header"))
       {
 
         println("Error al introducir los argumentos de la aplicación," +
-          " los argumentos permitidos y a su vez obligatorios son:")
-        println()
-        println("database (nombre de la base de datos)")
-        println()
-        println("table (nombre de la tabla)")
-        println()
-        println("location (ruta de los datos de la tabla)")
-        println()
-        println("regex (expresión regular para tabular los datos)")
-        println()
-        println("schema (esquema de los datos tal y como lo introduciríamos en Hive)")
-        println()
+          " los argumentos permitidos y a su vez obligatorios son:\n")
+        println("database (nombre de la base de datos)\n")
+        println("table (nombre de la tabla)\n")
+        println("location (ruta de los datos de la tabla)\n")
+        println("regex (expresión regular para tabular los datos)\n")
+        println("schema (esquema de los datos tal y como lo introduciríamos en Hive)\n")
         println("header (utilizar el valor true si queremos indicar que ls primera línea es header" +
-          ", cualquier otro valor indica que es falso)")
-        println()
-        println(" La sintaxis para introducir estos argumentos es: argumento=valor")
+          ", cualquier otro valor indica que es falso)\n")
+        println(" La sintaxis para introducir estos argumentos es: argumento=valor\n")
 
         throw new IllegalArgumentException("Los argumentos introducidos son incorrectos. \n\n" +
           "Los argumentos permitidos y a su vez obligatorios son: \n\n" +
@@ -67,21 +59,20 @@ object AutoTable
 
       spark.sql("USE %s;".format(namedArgs("database")))
 
-      println()
-      println("Creando tabla de Hive con los argumentos: ")
-      println()
-      println("database = %s".format(namedArgs("database")))
-      println()
-      println("table = %s".format(namedArgs("table")))
-      println()
-      println("schema = %s".format(namedArgs("schema")))
-      println()
-      println("regex = %s".format(namedArgs("regex").replaceAll("""\\""", """\\""")))
-      println()
-      println("location = %s".format(namedArgs("location")))
-      println()
-      println("header = %s".format(namedArgs("header")))
-      println()
+      println("Creando tabla de Hive con los argumentos: \n")
+
+      println("database = %s\n".format(namedArgs("database")))
+
+      println("table = %s\n".format(namedArgs("table")))
+
+      println("schema = %s\n".format(namedArgs("schema")))
+
+      println("regex = %s\n".format(namedArgs("regex").replaceAll("""\\""", """\\""")))
+
+      println("location = %s\n".format(namedArgs("location")))
+
+      println("header = %s\n".format(namedArgs("header")))
+
 
 
       spark.sql(
@@ -93,9 +84,9 @@ object AutoTable
           namedArgs("regex").replaceAll("""\\""", """\\\\"""),
           namedArgs("location")))
 
-      println()
-      println("La query lanzada para crear la tabla ha sido:")
-      println()
+
+      println("La query lanzada para crear la tabla ha sido:\n")
+
 
 
       println(
@@ -106,30 +97,46 @@ object AutoTable
           namedArgs("schema"),
           namedArgs("regex").replaceAll("""\\""", """\\\\"""),
           namedArgs("location")))
+
       println()
 
       println("Como no funcionan las 'tableproperties' en la tabla y los headers no encajan con el formato de" +
         " la RegEx, tenemos que eliminar manualmente la primera fila de la tabla." +
-        " Haremos esto sólo en caso de que el argumento header tenga el valor 'true'")
-      println()
+        " Haremos esto sólo en caso de que el argumento header tenga el valor 'true'\n")
+
       println("Debemos tener cuidado con esto ya que normalmente los datos en Spark" +
         " tienden a ser particionados y no podemos eliminar el primer elemento de" +
         " cualquier partición. Por ello utilizamos la función 'monotonically_increasing_id()'" +
         " para crear una columna con los índices numéricos. Mientras tengamos menos de" +
-        " varios miles de particiones este método debería funcionar como se espera.")
+        " varios miles de particiones este método debería funcionar como se espera.\n")
 
       if (namedArgs("header") == "true") {
 
-        println()
-        print("Se ha seleccionado la opción de eliminar el header.")
-        println()
+
+        println("Se ha seleccionado la opción de eliminar el header.\n")
+
 
         val dataux = spark.sql("""SELECT * FROM %s""".format(namedArgs("table")))
 
+        println("Podemos mostrar cómo queda el DataFrame cuando le asignamos la " +
+          "columna con la id incremental.\n")
+
+        dataux.select("*")
+          .withColumn("number", monotonically_increasing_id())
+          .show(25)
+
         val dataux2 = dataux.select("*")
           .withColumn("number", monotonically_increasing_id())
-          .where("number != 1")
+          .where("number != 0")
           .drop("number")
+
+
+        println("Podemos mostrar el número de particiones del DataFrame bajando " +
+          "al nivel de RDD." +dataux2.rdd.getNumPartitions)
+        println()
+        println("Es interesante ya que sabemos que el método utilizado " +
+        "para asignar ids funciona mal con más de 1 billón de particiones.")
+
 
         dataux2.createOrReplaceTempView("tbaux")
 
@@ -139,12 +146,13 @@ object AutoTable
 
       }
 
-      println("Mostramos las primeras 25 líneas para ver el resultado de la tabulación:")
-      println()
 
-      val dataset = spark.sql("""select * from %s limit 25""".format(namedArgs("table")))
+      println("Mostramos las primeras 25 líneas para ver el resultado de la tabulación:\n")
 
-      dataset.show()
+
+      val dataset = spark.sql("""select * from %s""".format(namedArgs("table")))
+
+      dataset.show(25)
 
       println("El número de filas del dataset es: " + dataset.count())
       println()
