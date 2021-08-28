@@ -1,0 +1,65 @@
+Iniciando SparkSession ...
+Nos cambiamos a la base de datos indicada en los argumentos: tfm.
+Creando tabla de Hive con los datos en la dirección: hdfs://mycluster:8020/TFM/
+Como no funcionan las 'tableproperties' en la tabla y los headers no encajan con el formato de la RegEx, tenemos que eliminar manualmente la primera fila de la tabla.
+Mostramos los tipos de los datos de la tabla para ver que todo se ha importado correctamente.
++------------------+---------+-------+
+|          col_name|data_type|comment|
++------------------+---------+-------+
+|      COD_DISTRITO|      int|   null|
+|     DESC_DISTRITO|   string|   null|
+|   COD_DIST_BARRIO|      int|   null|
+|       DESC_BARRIO|   string|   null|
+|        COD_BARRIO|      int|   null|
+|  COD_DIST_SECCION|      int|   null|
+|       COD_SECCION|      int|   null|
+|      COD_EDAD_INT|      int|   null|
+|  EspanolesHombres|      int|   null|
+|  EspanolesMujeres|      int|   null|
+|ExtranjerosHombres|      int|   null|
+|ExtranjerosMujeres|      int|   null|
++------------------+---------+-------+
+
+Si no finalizamos las queries de Hive con 'show()' no muestran ningún resultado por pantalla.
+Comprobamos que la longitud de los campos es la adecuada y no hay espacios extra:
++-------------------+------------+---------------------+
+|      DESC_DISTRITO|COD_DISTRITO|length(DESC_DISTRITO)|
++-------------------+------------+---------------------+
+|         VILLAVERDE|          17|                   10|
+|      CIUDAD LINEAL|          15|                   13|
+|  VILLA DE VALLECAS|          18|                   17|
+|          HORTALEZA|          16|                    9|
+| PUENTE DE VALLECAS|          13|                   18|
+|            BARAJAS|          21|                    7|
+|          MORATALAZ|          14|                    9|
+|              USERA|          12|                    5|
+|             CENTRO|           1|                    6|
+|    MONCLOA-ARAVACA|           9|                   15|
+|          CHAMARTIN|           5|                    9|
+|             LATINA|          10|                    6|
+|          SALAMANCA|           4|                    9|
+|             TETUAN|           6|                    6|
+|           CHAMBERI|           7|                    8|
+|        CARABANCHEL|          11|                   11|
+|FUENCARRAL-EL PARDO|           8|                   19|
+|             RETIRO|           3|                    6|
+|         ARGANZUELA|           2|                   10|
+|          VICALVARO|          19|                    9|
++-------------------+------------+---------------------+
+only showing top 20 rows
+
+Mostramos las primeras 10 filas de la tabla para comprobar que el formato es correcto:
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+
+|COD_DISTRITO|DESC_DISTRITO|COD_DIST_BARRIO|DESC_BARRIO|COD_BARRIO|COD_DIST_SECCION|COD_SECCION|COD_EDAD_INT|EspanolesHombres|EspanolesMujeres|ExtranjerosHombres|ExtranjerosMujeres|
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          63|               6|               9|              null|                 1|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          64|               3|               8|                 2|              null|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          65|               3|               4|                 1|              null|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          66|               3|               2|              null|                 1|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          67|               1|              10|              null|              null|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          68|               5|               2|              null|                 2|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          69|            null|               7|              null|                 2|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          70|               6|               3|              null|              null|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          71|               3|               6|                 1|              null|
+|          10|       LATINA|           1004|     ALUCHE|         4|           10098|         98|          72|               1|              13|              null|              null|
++------------+-------------+---------------+-----------+----------+----------------+-----------+------------+----------------+----------------+------------------+------------------+
